@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image-compression";
 import type { Category, MenuItem } from "@/lib/types";
 
 export function MenuManager({
@@ -152,23 +153,33 @@ function ItemForm({
     setUploading(true);
     setError("");
 
-    const supabase = createClient();
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    try {
+      const optimizedFile = await compressImage(file);
 
-    const { error: uploadError } = await supabase.storage
-      .from("menu-images")
-      .upload(fileName, file);
+      const supabase = createClient();
+      // Compressed images are converted to JPEG for best size/quality balance
+      const fileExt = optimizedFile.type === "image/jpeg" ? "jpg" : file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-    if (uploadError) {
-      setError(`Image upload failed: ${uploadError.message}`);
+      const { error: uploadError } = await supabase.storage
+        .from("menu-images")
+        .upload(fileName, optimizedFile, {
+          contentType: optimizedFile.type,
+        });
+
+      if (uploadError) {
+        setError(`Image upload failed: ${uploadError.message}`);
+        setUploading(false);
+        return;
+      }
+
+      const { data } = supabase.storage.from("menu-images").getPublicUrl(fileName);
+      setImageUrl(data.publicUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image processing failed");
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data } = supabase.storage.from("menu-images").getPublicUrl(fileName);
-    setImageUrl(data.publicUrl);
-    setUploading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {

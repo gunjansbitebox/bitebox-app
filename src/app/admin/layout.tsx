@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -28,8 +29,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[var(--cream)]">
       <header className="bg-[var(--ink)] text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
-          <span className="font-extrabold">Gunjan&apos;s BiteBox · Admin</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between py-2">
+          <Link href="/admin" className="flex items-center gap-3 font-extrabold">
+            <span className="relative w-[90px] h-[90px] rounded-lg overflow-hidden flex-shrink-0">
+              <Image src="/assets/logo-dark.png" alt="Gunjan's BiteBox logo" fill className="object-contain" />
+            </span>
+            Gunjan&apos;s BiteBox · Admin
+          </Link>
           <nav className="flex items-center gap-6">
             {links.map((link) => (
               <Link
